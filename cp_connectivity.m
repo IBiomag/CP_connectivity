@@ -1,9 +1,13 @@
-c=clock;
-for k0 = 1:500
-  k0
+c = clock;
+
+nrepeat = 500;
+snr     = [0.5 1 1.5 2 2.5];
+r       = cell(1,nrepeat); % holds the results per repeat
+
+for k0 = 1:nrepeat
   perf = zeros(6,6,5,3); % freqs, measure, SNR, perfmeasure
-  snr  = [0.5 1 1.5 2 2.5];
   for s1 = 1:5
+    freq = cell(1,6);
     
     % simulation of signals
     fs    = 100;
@@ -18,19 +22,16 @@ for k0 = 1:500
     opt      = [];
     opt.maxf = 10;
     opt.tap  = 0;
-    freq1    = cp_spectral(x, y, fs, 1, opt);
+    freq{1}  = cp_spectral(x, y, fs, 1, opt);
     opt.tap  = 1;
-    freq2    = cp_spectral(x, y, fs, 1, opt);
+    freq{2}  = cp_spectral(x, y, fs, 1, opt);
     opt.tap  = 2;
-    freq3    = cp_spectral(x, y, fs, 1, opt);
-    freq4    = cp_spectral(x, y, fs, 2);
-    freq5    = cp_spectral(x, y, fs, 3);
-    freq6    = cp_spectral(x, y, fs, 4);
-    
-    freq     = {freq1 freq2 freq3 freq4 freq5 freq6};
+    freq{3}  = cp_spectral(x, y, fs, 1, opt);
+    freq{4}  = cp_spectral(x, y, fs, 2);
+    freq{5}  = cp_spectral(x, y, fs, 3);
+    freq{6}  = cp_spectral(x, y, fs, 4);
     
     % connectivity estimation
-    k0
     for k = 1:6
       for m = 1:6
         res = cp_measure(freq{m}, k);
@@ -41,5 +42,4 @@ for k0 = 1:500
   end % 5 SNR levels
   
   r{k0} = perf;
-keyboard
 end % iterations

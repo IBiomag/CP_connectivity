@@ -4,7 +4,8 @@ function freq = cp_spectral(x,y,fs,meth,opt)
 %opt.maxf highest frequency to compute
 
 if nargin<5
-  opt = struct([]);
+  opt      = [];
+  opt.maxf = 10;
 end
 opt.maxf    = ft_getopt(opt, 'maxf', 10);
 opt.length  = ft_getopt(opt, 'length', 2);

@@ -27,10 +27,11 @@ function res = cp_measure(freq, meth, opt)
 %  6. entropy
 
 if nargin<3
-    opt = struct([]);
+    opt    = [];
+    opt.uo = 'taper';
 end
 
-opt(1).uo = ft_getopt(opt, 'uo',   'taper');
+opt.uo = ft_getopt(opt, 'uo',   'taper');
 if ismember(meth, [1 3 6])
     opt.norm = ft_getopt(opt, 'norm', opt.uo); % original behavior
     assert(isequal(opt.norm, opt.uo));
