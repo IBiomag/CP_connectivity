@@ -1,6 +1,6 @@
-function res = CP_measure(freq, meth, opt)
+function res = cp_measure(freq, meth, opt)
 
-% CP_measure computes 'cortico-peripheral' connectivity from a fieldtrip
+% cp_measure computes 'cortico-peripheral' connectivity from a fieldtrip
 % style freq structure, consisting of 2 channels, and formatted as if
 % cfg.output = 'fourier', was used in ft_freqanalysis. Although most of the
 % connectivity metrics are implemented, and accessible using
@@ -12,7 +12,7 @@ function res = CP_measure(freq, meth, opt)
 %
 % Use as
 %
-%  res = CP_measure(freq, meth)
+%  res = cp_measure(freq, meth)
 %
 % with input arguments
 %  freq = fieldtrip style structure containing fourier coefficients for 2
@@ -29,7 +29,10 @@ function res = CP_measure(freq, meth, opt)
 if nargin<3
     opt = struct([]);
 end
-  
+
+if ~isfield(opt, 'uo')
+    opt(1).uo = 'taper';
+end
 
 nsurr    = 200; %number of randomizations, hard coded
 minshift = round(0.1*size(freq.cumsumcnt,1));
@@ -110,6 +113,24 @@ elseif donorm==2
 end
 args = {freq.fourierspctrm};
 
+switch opt.uo
+    case 'taper'
+        % original implementation, treat each taper as a unit of
+        % observation
+    case 'trial'
+        % treat each input epoch as a unit of observation, i.e. average the
+        % 'csd' across tapers before computing the actual metric
+        assert(all(freq.cumtapcnt(:)==freq.cumtapcnt(1)));
+        xindx = repmat((1:numel(freq.cumtapcnt)), freq.cumtapcnt(1), 1);
+        xindx = xindx(:);
+        yindx = (1:size(freq.fourierspctrm,1))';
+        zindx = ones(numel(yindx),1)./freq.cumtapcnt(1);
+        P     = sparse(xindx, yindx, zindx); % fast averaging matrix
+
+        args = cat(2, args, {P});
+end
+
+
 tic;
 res.cp = connfun(args{:});
 for k = 1:nsurr
@@ -122,13 +143,17 @@ res.meth  = func2str(connfun);
 
 
 %%%%%%%%%%%%%%%%%%%%%%%
-function out = plv(dat)
+function out = plv(dat, P)
         
 % plv
           
 % get the phase differences
 phdiff = squeeze(dat(:,1,:).*conj(dat(:,2,:)));
-     
+
+if nargin>1
+    phdiff = P*phdiff;
+end
+
 % actual computation
 out = abs(mean(phdiff));
 
@@ -152,28 +177,36 @@ for k = 1:nf
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%
-function out = rtest(dat)
+function out = rtest(dat, P)
 
 % circular R-test
 
 % get the phase differences
 phdiff = squeeze(dat(:,1,:).*conj(dat(:,2,:)));
-     
+  
+if nargin>1
+    phdiff = P*phdiff;
+end
+
 % actual computation
 out = size(phdiff,1)*(abs(mean(phdiff))).^2;
  
 %%%%%%%%%%%%%%%%%%%%%%%%
-function out = wppc(dat)
+function out = wppc(dat, P)
 
 % wpcc
 input    = squeeze(dat(:,1,:).*conj(dat(:,2,:)));
+
+if nargin>1
+    input = P*input;
+end
 outsum   = sum(input); 
 outssq   = sum(input.*conj(input));
 outsumw  = sum(abs(input));
 out      = (outsum.*conj(outsum) - outssq)./(outsumw.*conj(outsumw) - outssq); %
 
 %%%%%%%%%%%%%%%%%%%%%%%
-function out = coh(dat)
+function out = coh(dat, P)
 
 % coherence -> magnitude squared coherence
 
@@ -185,10 +218,17 @@ xy = abs(mean(x.*conj(y)));
 px = mean(abs(x).^2);
 py = mean(abs(y).^2);
 
+if nargin>1
+    xy = P*xy;
+    px = P*x;
+    py = P*y;
+end
+
+
 out = (xy.^2)./(px.*py);
 
 %%%%%%%%%%%%%%%%%%%%%%%
-function out = ent(dat)
+function out = ent(dat, P)
 
 % entropy
 
@@ -199,7 +239,11 @@ nsamp   = size(dat, 1);
          
 % get the phase differences
 phdiff = angle(squeeze(dat(:,1,:).*conj(dat(:,2,:))));
-         
+   
+if nargin>1
+    phdiff = P*phdiff;
+end
+
 %phdiff = angle(exp(1i*(x-y)));
 %phdiff = mod(x - y + pi, 2*pi)-pi; % the same as above, but ~3 times as fast
 phhist = hist(phdiff, phsbins);

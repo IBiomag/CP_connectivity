@@ -18,14 +18,14 @@ for k0 = 1:500
     opt      = [];
     opt.maxf = 10;
     opt.tap  = 0;
-    freq1    = CP_spectral(x, y, fs, 1, opt);
+    freq1    = cp_spectral(x, y, fs, 1, opt);
     opt.tap  = 1;
-    freq2    = CP_spectral(x, y, fs, 1, opt);
+    freq2    = cp_spectral(x, y, fs, 1, opt);
     opt.tap  = 2;
-    freq3    = CP_spectral(x, y, fs, 1, opt);
-    freq4    = CP_spectral(x, y, fs, 2);
-    freq5    = CP_spectral(x, y, fs, 3);
-    freq6    = CP_spectral(x, y, fs, 4);
+    freq3    = cp_spectral(x, y, fs, 1, opt);
+    freq4    = cp_spectral(x, y, fs, 2);
+    freq5    = cp_spectral(x, y, fs, 3);
+    freq6    = cp_spectral(x, y, fs, 4);
     
     freq     = {freq1 freq2 freq3 freq4 freq5 freq6};
     
@@ -33,7 +33,7 @@ for k0 = 1:500
     k0
     for k = 1:6
       for m = 1:6
-        res = CP_measure(freq{m}, k);
+        res = cp_measure(freq{m}, k);
         [perf(m,k,s1,1), perf(m,k,s1,2)] = plot_shaded(res,0,0);
         perf(m,k,s1,3) = res.etime;
       end % 6 spectral estimates
