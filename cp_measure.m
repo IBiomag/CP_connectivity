@@ -238,12 +238,13 @@ phsbins = linspace(-pi,pi,nbins);
 nsamp   = size(dat, 1);
          
 % get the phase differences
-phdiff = angle(squeeze(dat(:,1,:).*conj(dat(:,2,:))));
+phdiff = squeeze(dat(:,1,:).*conj(dat(:,2,:)));
    
 if nargin>1
     phdiff = P*phdiff;
 end
 
+phdiff = angle(phdiff);
 %phdiff = angle(exp(1i*(x-y)));
 %phdiff = mod(x - y + pi, 2*pi)-pi; % the same as above, but ~3 times as fast
 phhist = hist(phdiff, phsbins);
