@@ -30,8 +30,14 @@ if nargin<3
     opt = struct([]);
 end
 
-if ~isfield(opt, 'uo')
-    opt(1).uo = 'taper';
+opt(1).uo = ft_getopt(opt, 'uo',   'taper');
+if ismember(meth, [1 3 6])
+    opt.norm = ft_getopt(opt, 'norm', opt.uo); % original behavior
+    assert(isequal(opt.norm, opt.uo));
+elseif ismember(meth, [2 4 5])
+    opt.norm = ft_getopt(opt, 'norm', 'no');
+elseif ismember(meth, [7:11])
+    error('to be implemented');
 end
 
 nsurr    = 200; %number of randomizations, hard coded
@@ -45,15 +51,10 @@ res          = [];
 res.f        = freq.freq(:)';
 res.specmeth = freq.meth;
 
-donorm = 0;
 switch meth
     case 1
-        connfun = @plv;
-        if isfield(opt, 'norm')
-            donorm  = opt.norm; % needs to be done only once
-        else
-            donorm  = 1;
-        end
+        connfun  = @plv;
+         
     case 2
         connfun = @gcmi;
         
@@ -64,22 +65,12 @@ switch meth
         
     case 3
         connfun = @rtest;
-        if isfield(opt, 'norm')
-            donorm  = opt.norm; % needs to be done only once
-        else
-            donorm  = 1;
-        end
     case 4
         connfun = @wppc;
     case 5
         connfun = @coh;
     case 6
         connfun = @ent;
-        if isfield(opt, 'norm')
-            donorm  = opt.norm; % needs to be done only once
-        else
-            donorm  = 1;
-        end
     case 7
     case 8
     case 9
@@ -89,27 +80,33 @@ switch meth
     otherwise
 end
 
-if donorm==1
-    % normalise each taper
-    freq.fourierspctrm = freq.fourierspctrm./abs(freq.fourierspctrm);
-    
-elseif donorm==2
-    % normalise each trial
-    powtap = abs(freq.fourierspctrm).^2;
-    
-    assert(all(freq.cumtapcnt(:)==freq.cumtapcnt(1)));
-    xindx = repmat((1:numel(freq.cumtapcnt)), freq.cumtapcnt(1), 1);
-    xindx = xindx(:);
-    yindx = (1:size(freq.fourierspctrm,1))';
-    zindx = ones(numel(yindx),1)./freq.cumtapcnt(1);
-    P     = sparse(xindx, yindx, zindx); % fast averaging matrix
-    pow1(1,:,:) = P * squeeze(powtap(:,1,:));
-    pow2(1,:,:) = P * squeeze(powtap(:,2,:));
-    
-    pow(:,1,:) = reshape(repmat(pow1, freq.cumtapcnt(1), 1), [], numel(freq.freq));
-    pow(:,2,:) = reshape(repmat(pow2, freq.cumtapcnt(1), 1), [], numel(freq.freq));
-    
-    freq.fourierspctrm = freq.fourierspctrm./sqrt(pow);
+switch opt.norm
+    case 'no'
+        % no normalisation
+    case 'taper'
+        % normalise each taper
+        freq.fourierspctrm = freq.fourierspctrm./abs(freq.fourierspctrm);
+        
+    case 'trial'
+        % normalise each trial
+        powtap = abs(freq.fourierspctrm).^2;
+        
+        assert(all(freq.cumtapcnt(:)==freq.cumtapcnt(1)));
+        xindx = repmat((1:numel(freq.cumtapcnt)), freq.cumtapcnt(1), 1);
+        xindx = xindx(:);
+        yindx = (1:size(freq.fourierspctrm,1))';
+        zindx = ones(numel(yindx),1)./freq.cumtapcnt(1);
+        P     = sparse(xindx, yindx, zindx); % fast averaging matrix
+        pow1(1,:,:) = P * squeeze(powtap(:,1,:));
+        pow2(1,:,:) = P * squeeze(powtap(:,2,:));
+        
+        pow(:,1,:) = reshape(repmat(pow1, freq.cumtapcnt(1), 1), [], numel(freq.freq));
+        pow(:,2,:) = reshape(repmat(pow2, freq.cumtapcnt(1), 1), [], numel(freq.freq));
+        
+        freq.fourierspctrm = freq.fourierspctrm./sqrt(pow);
+    otherwise
+        error('unknown normalisation option');
+        
 end
 args = {freq.fourierspctrm};
 
@@ -128,6 +125,8 @@ switch opt.uo
         P     = sparse(xindx, yindx, zindx); % fast averaging matrix
 
         args = cat(2, args, {P});
+    otherwise
+        error('unknown unit of observation option');
 end
 
 
