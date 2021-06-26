@@ -22,19 +22,19 @@ for k0 = 1:nrepeat
     opt      = [];
     opt.maxf = 10;
     opt.tap  = 0;
-    freq{1}  = cp_spectral(x, y, fs, 1, opt);
+    freq{1}  = cp_spectral_new(x, y, fs, 1, opt);
     opt.tap  = 1;
-    freq{2}  = cp_spectral(x, y, fs, 1, opt);
+    freq{2}  = cp_spectral_new(x, y, fs, 1, opt);
     opt.tap  = 2;
-    freq{3}  = cp_spectral(x, y, fs, 1, opt);
-    freq{4}  = cp_spectral(x, y, fs, 2);
-    freq{5}  = cp_spectral(x, y, fs, 3);
-    freq{6}  = cp_spectral(x, y, fs, 4);
+    freq{3}  = cp_spectral_new(x, y, fs, 1, opt);
+    freq{4}  = cp_spectral_new(x, y, fs, 2);
+    freq{5}  = cp_spectral_new(x, y, fs, 3);
+    freq{6}  = cp_spectral_new(x, y, fs, 4);
     
     % connectivity estimation
     for k = 1:6
       for m = 1:6
-        res = cp_measure(freq{m}, k);
+        res = cp_measure_new(freq{m}, k);
         [perf(m,k,s1,1), perf(m,k,s1,2)] = plot_shaded(res,0,0);
         perf(m,k,s1,3) = res.etime;
       end % 6 spectral estimates
